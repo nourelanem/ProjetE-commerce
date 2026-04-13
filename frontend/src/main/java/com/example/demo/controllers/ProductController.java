@@ -1,5 +1,4 @@
 package com.example.demo.controllers;
-
 import com.example.demo.entities.Product;
 import com.example.demo.repositories.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.*;
 
 import java.util.List;
+@CrossOrigin(origins = "http://localhost:3001")
 
 @RestController
 @RequestMapping("/products")
