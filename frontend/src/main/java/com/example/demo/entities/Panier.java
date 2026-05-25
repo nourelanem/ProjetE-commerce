@@ -1,6 +1,7 @@
 package com.example.demo.entities;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -13,6 +14,7 @@ public class Panier {
 
     // statut: "EN_COURS" ou "COMMANDE"
     private String statut = "EN_COURS";
+    private LocalDateTime dateCommande;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -25,6 +27,8 @@ public class Panier {
     public void setId(Long id) { this.id = id; }
     public String getStatut() { return statut; }
     public void setStatut(String statut) { this.statut = statut; }
+    public LocalDateTime getDateCommande() { return dateCommande; }
+    public void setDateCommande(LocalDateTime dateCommande) { this.dateCommande = dateCommande; }
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
     public List<LigneCommande> getLignes() { return lignes; }

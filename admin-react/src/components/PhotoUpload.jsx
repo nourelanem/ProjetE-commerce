@@ -43,6 +43,8 @@ export default function PhotoUpload({ product, onUploaded }) {
         background: preview ? "transparent" : "#E6F1FB22",
         position: "relative",
         minHeight: 140,
+        width: "100%",
+        maxWidth: "100%",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -63,10 +65,11 @@ export default function PhotoUpload({ product, onUploaded }) {
           src={preview}
           alt="preview"
           style={{
-            maxHeight: 120,
+            width: "100%",
+            maxHeight: "clamp(120px, 28vw, 220px)",
             maxWidth: "100%",
             borderRadius: 6,
-            objectFit: "cover",
+            objectFit: "contain",
           }}
         />
       ) : (

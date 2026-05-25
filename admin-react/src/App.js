@@ -6,7 +6,7 @@ import {
   getProducts, createProduct, updateProduct, deleteProduct,
   getCategories, createCategory, updateCategory, deleteCategory,
   getSuppliers, createSupplier, updateSupplier, deleteSupplier,
-  getPhotoUrl, uploadProductPhoto
+  getPhotoUrl
 } from "./api/api";
 import PhotoUpload from "./components/PhotoUpload";
 
@@ -179,8 +179,8 @@ function Sidebar({ page, setPage, user, onLogout }) {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 32, height: 32, background: T.accent, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>⬡</div>
           <div>
-            <div style={{ fontWeight: 600, fontSize: 14, color: T.text }}>AdminSpace</div>
-            <div style={{ fontSize: 10, color: T.textMuted }}>Panel de gestion</div>
+            <div style={{ fontWeight: 600, fontSize: 14, color: T.text }}>NounouPara</div>
+            <div style={{ fontSize: 10, color: T.textMuted }}>Gestion parapharmacie</div>
           </div>
         </div>
       </div>
@@ -282,7 +282,7 @@ function DashboardPage() {
                 >
                   <td style={{ padding: "10px 16px" }}>
                     {p.photoUrl
-                      ? <img src={getPhotoUrl(p.id)} alt={p.name} style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 8, border: `1px solid ${T.border}` }} />
+                      ? <img src={getPhotoUrl(p.id)} alt={p.name} style={{ width: "clamp(32px, 7vw, 36px)", height: "clamp(32px, 7vw, 36px)", objectFit: "cover", borderRadius: 8, border: `1px solid ${T.border}` }} />
                       : <div style={{ width: 36, height: 36, background: T.bg, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>📦</div>
                     }
                   </td>
@@ -304,7 +304,7 @@ function DashboardPage() {
 /* ─────────────────────────────────────────────
    PRODUCTS PAGE
 ───────────────────────────────────────────── */
-const emptyProduct = { name: "", price: "", description: "", category: "", supplier: "" };
+const emptyProduct = { name: "", price: "", quantity: "1", description: "", category: "", supplier: "" };
 
 function ProductsPage() {
   const [products, setProducts] = useState([]);
@@ -313,6 +313,7 @@ function ProductsPage() {
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(emptyProduct);
   const [savedProduct, setSavedProduct] = useState(null);
+  const [showPhotoStep, setShowPhotoStep] = useState(false);
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("grid");
 
@@ -323,21 +324,37 @@ function ProductsPage() {
     setProducts(p); setCategories(c); setSuppliers(s);
   };
 
-  const openCreate = () => { setForm(emptyProduct); setSavedProduct(null); setModal("create"); };
+  const openCreate = () => { setForm(emptyProduct); setSavedProduct(null); setShowPhotoStep(false); setModal("create"); };
   const openEdit = (p) => {
-    setForm({ name: p.name, price: p.price, description: p.description || "", category: p.category?.id ?? "", supplier: p.supplier?.id ?? "" });
-    setSavedProduct(p); setModal(p);
+    setForm({ name: p.name, price: p.price, quantity: p.quantity ?? 0, description: p.description || "", category: p.category?.id ?? "", supplier: p.supplier?.id ?? "" });
+    setSavedProduct(p);
+    setShowPhotoStep(false);
+    setModal(p);
   };
-  const closeModal = () => { setModal(null); setSavedProduct(null); load(); };
+  const openPhoto = (p) => {
+    setSavedProduct(p);
+    setShowPhotoStep(true);
+    setModal(p);
+  };
+  const closeModal = () => { setModal(null); setSavedProduct(null); setShowPhotoStep(false); load(); };
 
   const handleSubmit = async () => {
     const payload = {
-      name: form.name, price: parseFloat(form.price), description: form.description,
+      name: form.name,
+      price: parseFloat(form.price),
+      quantity: Math.max(0, parseInt(form.quantity || "0", 10)),
+      description: form.description,
       category: form.category ? { id: parseInt(form.category) } : null,
       supplier: form.supplier ? { id: parseInt(form.supplier) } : null
     };
-    const saved = modal === "create" ? await createProduct(payload) : await updateProduct(modal.id, payload);
+    const isCreate = modal === "create";
+    const saved = isCreate ? await createProduct(payload) : await updateProduct(modal.id, payload);
     setSavedProduct(saved);
+    if (isCreate) {
+      setShowPhotoStep(true);
+    } else {
+      closeModal();
+    }
   };
 
   const handleDelete = async (id) => {
@@ -379,15 +396,15 @@ function ProductsPage() {
 
       {/* GRID */}
       {viewMode === "grid" && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px,1fr))", gap: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(210px, 100%), 1fr))", gap: 14 }}>
           {filtered.map(p => (
             <Card key={p.id} style={{ overflow: "hidden", display: "flex", flexDirection: "column", transition: "border-color .2s" }}
               onMouseEnter={e => e.currentTarget.style.borderColor = T.accent + "60"}
               onMouseLeave={e => e.currentTarget.style.borderColor = T.border}
             >
-              <div style={{ height: 160, background: T.bg, overflow: "hidden", flexShrink: 0 }}>
+              <div className="responsive-product-media" style={{ width: "100%", aspectRatio: "4 / 3", minHeight: 145, maxHeight: 220, background: T.bg, overflow: "hidden", flexShrink: 0 }}>
                 {p.photoUrl
-                  ? <img src={getPhotoUrl(p.id)} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ? <img src={getPhotoUrl(p.id)} alt={p.name} style={{ width: "100%", height: "100%", maxWidth: "100%", objectFit: "cover" }} />
                   : <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                     <span style={{ fontSize: 36 }}>📦</span>
                     <span style={{ fontSize: 10, color: T.textMuted, marginTop: 6 }}>Pas de photo</span>
@@ -396,12 +413,19 @@ function ProductsPage() {
               </div>
               <div style={{ padding: "12px 14px", flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4, color: T.text }}>{p.name}</div>
-                <div style={{ fontSize: 16, fontWeight: 600, color: T.accentLight, marginBottom: 6 }}>{p.price.toFixed(2)} €</div>
-                {p.category && <span className="badge" style={{ background: T.accentBg, color: T.accentLight }}>{p.category.name}</span>}
+                <div style={{ fontSize: 16, fontWeight: 600, color: T.accentLight, marginBottom: 6 }}>{p.price.toFixed(2)} TND</div>
+                <div style={{ fontSize: 11, color: p.quantity > 0 ? T.success : T.danger, fontWeight: 600, marginBottom: 6 }}>
+                  Stock : {p.quantity ?? 0}
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {p.category && <span className="badge" style={{ background: T.accentBg, color: T.accentLight }}>{p.category.name}</span>}
+                  {p.supplier && <span className="badge" style={{ background: T.warningBg, color: T.warning }}>{p.supplier.name}</span>}
+                </div>
                 {p.description && <p style={{ fontSize: 11, color: T.textMuted, marginTop: 8, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{p.description}</p>}
               </div>
               <div style={{ display: "flex", borderTop: `1px solid ${T.border}`, padding: "8px 10px", gap: 6 }}>
                 <Btn size="sm" variant="ghost" onClick={() => openEdit(p)} style={{ flex: 1 }}>✏ Modifier</Btn>
+                <Btn size="sm" variant="ghost" onClick={() => openPhoto(p)}>Photo</Btn>
                 <Btn size="sm" variant="danger" onClick={() => handleDelete(p.id)}>🗑</Btn>
               </div>
             </Card>
@@ -415,7 +439,7 @@ function ProductsPage() {
         <Card style={{ overflow: "hidden" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
-              <tr>{["Photo", "Nom", "Prix", "Catégorie", "Fournisseur", "Actions"].map(h => (
+              <tr>{["Photo", "Nom", "Prix", "Stock", "Catégorie", "Fournisseur", "Actions"].map(h => (
                 <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, color: T.textMuted, fontWeight: 600, letterSpacing: ".4px", textTransform: "uppercase", borderBottom: `1px solid ${T.border}` }}>{h}</th>
               ))}</tr>
             </thead>
@@ -426,22 +450,24 @@ function ProductsPage() {
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                 >
                   <td style={{ padding: "10px 16px" }}>
-                    {p.photoUrl ? <img src={getPhotoUrl(p.id)} alt={p.name} style={{ width: 40, height: 40, objectFit: "cover", borderRadius: 8 }} />
+                    {p.photoUrl ? <img src={getPhotoUrl(p.id)} alt={p.name} style={{ width: "clamp(34px, 7vw, 40px)", height: "clamp(34px, 7vw, 40px)", objectFit: "cover", borderRadius: 8 }} />
                       : <div style={{ width: 40, height: 40, background: T.bg, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>📦</div>}
                   </td>
                   <td style={{ padding: "10px 16px", fontWeight: 500 }}>{p.name}</td>
-                  <td style={{ padding: "10px 16px", color: T.accentLight, fontWeight: 500 }}>{p.price.toFixed(2)} €</td>
+                  <td style={{ padding: "10px 16px", color: T.accentLight, fontWeight: 500 }}>{p.price.toFixed(2)} TND</td>
+                  <td style={{ padding: "10px 16px", color: p.quantity > 0 ? T.success : T.danger, fontWeight: 600 }}>{p.quantity ?? 0}</td>
                   <td style={{ padding: "10px 16px" }}>{p.category ? <span className="badge" style={{ background: T.accentBg, color: T.accentLight }}>{p.category.name}</span> : <span style={{ color: T.textMuted }}>—</span>}</td>
                   <td style={{ padding: "10px 16px", color: T.textDim }}>{p.supplier?.name ?? "—"}</td>
                   <td style={{ padding: "10px 16px" }}>
                     <div style={{ display: "flex", gap: 6 }}>
                       <Btn size="sm" variant="ghost" onClick={() => openEdit(p)}>Modifier</Btn>
+                      <Btn size="sm" variant="ghost" onClick={() => openPhoto(p)}>Photo</Btn>
                       <Btn size="sm" variant="danger" onClick={() => handleDelete(p.id)}>Supprimer</Btn>
                     </div>
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && <tr><td colSpan={6}><EmptyState icon="📦" text="Aucun produit trouvé" /></td></tr>}
+              {filtered.length === 0 && <tr><td colSpan={7}><EmptyState icon="📦" text="Aucun produit trouvé" /></td></tr>}
             </tbody>
           </table>
         </Card>
@@ -450,22 +476,27 @@ function ProductsPage() {
       {/* MODAL */}
       {modal && (
         <Modal title={modal === "create" ? "Nouveau produit" : "Modifier le produit"} onClose={closeModal}>
-          {!savedProduct ? (
+          {!showPhotoStep ? (
             <>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <FormGroup label="Nom *">
+                <div style={{ gridColumn: "1/-1" }}>
+                  <FormGroup label="Nom *">
                   <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Nom du produit" style={{ gridColumn: "1/-1" }} />
-                </FormGroup>
-                <FormGroup label="Prix (€) *">
+                  </FormGroup>
+                </div>
+                <FormGroup label="Prix (TND) *">
                   <Input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="0.00" />
                 </FormGroup>
-                <FormGroup label="Catégorie">
+                <FormGroup label="Quantité en stock *">
+                  <Input type="number" value={form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value })} placeholder="0" />
+                </FormGroup>
+                <FormGroup label="Catégorie du produit">
                   <Select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
                     <option value="">— Choisir —</option>
                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </Select>
                 </FormGroup>
-                <FormGroup label="Fournisseur">
+                <FormGroup label="Fournisseur du produit">
                   <Select value={form.supplier} onChange={e => setForm({ ...form, supplier: e.target.value })}>
                     <option value="">— Choisir —</option>
                     {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -477,8 +508,8 @@ function ProductsPage() {
                   placeholder="Description du produit…"
                   style={{ width: "100%", padding: "9px 12px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 13, height: 80, resize: "vertical", outline: "none", fontFamily: T.font }} />
               </FormGroup>
-              <Btn onClick={handleSubmit} disabled={!form.name || !form.price} style={{ width: "100%", marginTop: 4 }}>
-                Enregistrer →
+              <Btn onClick={handleSubmit} disabled={!form.name || !form.price || form.quantity === ""} style={{ width: "100%", marginTop: 4 }}>
+                {modal === "create" ? "Enregistrer le produit →" : "Enregistrer les modifications →"}
               </Btn>
             </>
           ) : (
@@ -544,7 +575,7 @@ function CategoriesPage() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px,1fr))", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(200px, 100%), 1fr))", gap: 12 }}>
         {filtered.map((c, i) => {
           const color = colors[i % colors.length];
           return (
@@ -603,9 +634,18 @@ function SuppliersPage() {
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(emptySupplier);
   const [search, setSearch] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => { load(); }, []);
-  const load = () => getSuppliers().then(setSuppliers);
+  const load = async () => {
+    setError("");
+    try {
+      setSuppliers(await getSuppliers());
+    } catch (err) {
+      setSuppliers([]);
+      setError(err.message || "Impossible de charger les fournisseurs.");
+    }
+  };
 
   const openCreate = () => { setForm(emptySupplier); setModal("create"); };
   const openEdit = (s) => { setForm({ name: s.name, email: s.email || "", phone: s.phone || "", address: s.address || "" }); setModal(s); };
@@ -638,6 +678,12 @@ function SuppliersPage() {
           <Btn onClick={openCreate}>+ Nouveau</Btn>
         </div>
       </div>
+
+      {error && (
+        <div style={{ background: T.dangerBg, border: `1px solid rgba(239,68,68,.25)`, color: T.danger, borderRadius: 8, padding: "10px 14px", fontSize: 13, marginBottom: "1rem" }}>
+          {error}
+        </div>
+      )}
 
       <Card style={{ overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -735,6 +781,50 @@ function AdminDashboard() {
   );
 }
 
+function SuperAdminWorkspace() {
+  const [section, setSection] = useState("users");
+
+  const tab = (key, label) => (
+    <button
+      onClick={() => setSection(key)}
+      style={{
+        padding: "10px 16px",
+        border: section === key ? `1px solid ${T.accent}` : `1px solid ${T.border}`,
+        borderRadius: 8,
+        background: section === key ? T.accentBg : T.surface,
+        color: section === key ? T.accentLight : T.textDim,
+        cursor: "pointer",
+        fontWeight: 600,
+        fontFamily: T.font,
+      }}
+    >
+      {label}
+    </button>
+  );
+
+  if (section === "shop") {
+    return (
+      <div>
+        <div style={{ position: "fixed", top: 18, right: 24, zIndex: 1000, display: "flex", gap: 8 }}>
+          {tab("users", "Utilisateurs")}
+          {tab("shop", "Gestion boutique")}
+        </div>
+        <AdminDashboard />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ position: "fixed", top: 12, left: "50%", transform: "translateX(-50%)", zIndex: 1000, display: "flex", gap: 8 }}>
+        {tab("users", "Utilisateurs")}
+        {tab("shop", "Gestion boutique")}
+      </div>
+      <SuperAdminDashboard />
+    </div>
+  );
+}
+
 /* ─────────────────────────────────────────────
    APP ROUTER
 ───────────────────────────────────────────── */
@@ -744,7 +834,7 @@ function AppRouter() {
   if (!user) return <ClientDashboard />;
 
   switch (user.role) {
-    case "ROLE_SUPERADMIN": return <SuperAdminDashboard />;
+    case "ROLE_SUPERADMIN": return <SuperAdminWorkspace />;
     case "ROLE_ADMIN": return <AdminDashboard />;
     case "ROLE_CLIENT": return <ClientDashboard />;
     default: return <ClientDashboard />;
@@ -758,3 +848,4 @@ export default function App() {
     </AuthProvider>
   );
 }
+

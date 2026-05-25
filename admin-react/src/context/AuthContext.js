@@ -13,23 +13,33 @@ export const AuthProvider = ({ children }) => {
         setUser(JSON.parse(storedUser));
       } catch {
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
       }
     }
     setLoading(false);
   }, []);
 
   const loginUser = (userData) => {
-    // userData = { id, nom, email, role } — directement ce que retourne le backend
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    // userData = { token, id, nom, email, role }
+    const { token, ...userInfo } = userData;
+
+    // Sauvegarder le token JWT pour les requêtes API
+    if (token) {
+      localStorage.setItem('token', token);
+    }
+
+    // Sauvegarder les infos utilisateur
+    setUser(userInfo);
+    localStorage.setItem('user', JSON.stringify(userInfo));
   };
 
   const logoutUser = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('token'); // ← important : supprimer le token aussi
   };
 
-  if (loading) return null; // Attend que le localStorage soit lu
+  if (loading) return null;
 
   return (
     <AuthContext.Provider value={{ user, loginUser, logoutUser }}>

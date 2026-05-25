@@ -1,5 +1,6 @@
 package com.example.demo.controllers;
 import com.example.demo.entities.Product;
+import com.example.demo.repositories.LigneCommandeRepository;
 import com.example.demo.repositories.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -23,6 +24,9 @@ public class ProductController {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private LigneCommandeRepository ligneCommandeRepository;
 
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -50,8 +54,11 @@ public class ProductController {
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         product.setName(updated.getName());
         product.setPrice(updated.getPrice());
+        product.setQuantity(updated.getQuantity());
         product.setDescription(updated.getDescription());
-        product.setPhotoUrl(updated.getPhotoUrl());
+        if (updated.getPhotoUrl() != null && !updated.getPhotoUrl().isBlank()) {
+            product.setPhotoUrl(updated.getPhotoUrl());
+        }
         product.setCategory(updated.getCategory());
         product.setSupplier(updated.getSupplier());
         return productRepository.save(product);
@@ -60,6 +67,7 @@ public class ProductController {
     // DELETE
     @DeleteMapping("/{id}")
     public void deleteProduct(@PathVariable Long id) {
+        ligneCommandeRepository.deleteByProductId(id);
         productRepository.deleteById(id);
     }
 

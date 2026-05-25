@@ -68,17 +68,17 @@ export default function Products() {
       </div>
 
       {/* Search */}
-      <input placeholder="🔍  Rechercher un produit…" value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: 280, padding: "8px 12px", border: "0.5px solid #ccc", borderRadius: 8, fontSize: 14, outline: "none", marginBottom: "1.5rem" }} />
+      <input placeholder="🔍  Rechercher un produit…" value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: "min(280px, 100%)", padding: "8px 12px", border: "0.5px solid #ccc", borderRadius: 8, fontSize: 14, outline: "none", marginBottom: "1.5rem" }} />
 
       {/* GRID VIEW */}
       {viewMode === "grid" && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(200px, 100%), 1fr))", gap: 16 }}>
           {filtered.map((p) => (
             <div key={p.id} style={{ background: "#fff", border: "0.5px solid #e0e0e0", borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" }}>
               {/* Big photo */}
-              <div style={{ width: "100%", height: 180, background: "#f8f8f6", overflow: "hidden", flexShrink: 0 }}>
+              <div className="responsive-product-media" style={{ width: "100%", aspectRatio: "4 / 3", minHeight: 150, maxHeight: 220, background: "#f8f8f6", overflow: "hidden", flexShrink: 0 }}>
                 {p.photoUrl ? (
-                  <img src={getPhotoUrl(p.id)} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={getPhotoUrl(p.id)} alt={p.name} style={{ width: "100%", height: "100%", maxWidth: "100%", objectFit: "cover" }} />
                 ) : (
                   <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                     <span style={{ fontSize: 44 }}>📦</span>
@@ -115,7 +115,7 @@ export default function Products() {
               {filtered.map((p) => (
                 <tr key={p.id}>
                   <td style={{ padding: "10px 16px", borderBottom: "0.5px solid #f5f5f5" }}>
-                    {p.photoUrl ? <img src={getPhotoUrl(p.id)} alt={p.name} style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 8 }} /> : <div style={{ width: 44, height: 44, background: "#f5f5f5", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>📦</div>}
+                    {p.photoUrl ? <img src={getPhotoUrl(p.id)} alt={p.name} style={{ width: "clamp(36px, 8vw, 44px)", height: "clamp(36px, 8vw, 44px)", maxWidth: "100%", objectFit: "cover", borderRadius: 8 }} /> : <div style={{ width: "clamp(36px, 8vw, 44px)", height: "clamp(36px, 8vw, 44px)", background: "#f5f5f5", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>📦</div>}
                   </td>
                   <td style={{ padding: "10px 16px", borderBottom: "0.5px solid #f5f5f5", fontWeight: 500 }}>{p.name}</td>
                   <td style={{ padding: "10px 16px", borderBottom: "0.5px solid #f5f5f5" }}>{p.price.toFixed(2)} €</td>

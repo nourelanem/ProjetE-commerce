@@ -7,9 +7,18 @@ export default function Suppliers() {
   const [items, setItems] = useState([]);
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(empty);
+  const [error, setError] = useState("");
 
   useEffect(() => { load(); }, []);
-  const load = () => getSuppliers().then(setItems);
+  const load = async () => {
+    setError("");
+    try {
+      setItems(await getSuppliers());
+    } catch (err) {
+      setItems([]);
+      setError(err.message || "Impossible de charger les fournisseurs.");
+    }
+  };
 
   const open = (s = null) => { setForm(s ? { name: s.name, email: s.email, phone: s.phone, address: s.address } : empty); setModal(s || "new"); };
   const save = async () => { if (modal === "new") await createSupplier(form); else await updateSupplier(modal.id, form); setModal(null); load(); };
@@ -21,6 +30,7 @@ export default function Suppliers() {
         <h1 style={{ fontSize: 22, fontWeight: 500, margin: 0 }}>Fournisseurs</h1>
         <button onClick={() => open()} style={btn}>+ Nouveau fournisseur</button>
       </div>
+      {error && <div style={{ background: "#FFF0F0", color: "#A32D2D", borderRadius: 8, padding: "10px 12px", fontSize: 13, marginBottom: 16 }}>{error}</div>}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
         {items.map(s => (
           <div key={s.id} style={{ background: "#fff", border: "0.5px solid #e0e0e0", borderRadius: 12, padding: "1rem 1.25rem" }}>

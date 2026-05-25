@@ -6,6 +6,7 @@ import com.example.demo.repositories.RoleRepository;
 import com.example.demo.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -13,32 +14,36 @@ public class DataInitializer implements CommandLineRunner {
 
     @Autowired private RoleRepository roleRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
-        // Créer les rôles s'ils n'existent pas
-        creerRole("ROLE_CLIENT");
-        creerRole("ROLE_ADMIN");
-        creerRole("ROLE_SUPERADMIN");
+        Role clientRole = createRole("ROLE_CLIENT");
+        Role adminRole = createRole("ROLE_ADMIN");
+        Role superAdminRole = createRole("ROLE_SUPERADMIN");
 
-        // Créer le super admin par défaut
-        if (userRepository.findByEmail("superadmin@admin.com").isEmpty()) {
-            Role role = roleRepository.findByNom("ROLE_SUPERADMIN").get();
-            User admin = new User();
-            admin.setNom("Super Admin");
-            admin.setEmail("superadmin@admin.com");
-            admin.setPassword("admin123");
-            admin.setRole(role);
-            userRepository.save(admin);
-            System.out.println("Super admin créé: superadmin@admin.com / admin123");
-        }
+        upsertDefaultUser("Super Admin", "superadmin@admin.com", "admin123", superAdminRole);
+        upsertDefaultUser("Admin", "admin@admin.com", "admin123", adminRole);
+        upsertDefaultUser("Client Test", "client@client.com", "client123", clientRole);
     }
 
-    private void creerRole(String nom) {
-        if (roleRepository.findByNom(nom).isEmpty()) {
-            Role r = new Role();
-            r.setNom(nom);
-            roleRepository.save(r);
-        }
+    private Role createRole(String nom) {
+        return roleRepository.findByNom(nom).orElseGet(() -> {
+            Role role = new Role();
+            role.setNom(nom);
+            return roleRepository.save(role);
+        });
+    }
+
+    private void upsertDefaultUser(String nom, String email, String rawPassword, Role role) {
+        User user = userRepository.findByEmail(email).orElseGet(User::new);
+        user.setNom(nom);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setRole(role);
+        user.setEmailVerified(true);
+        user.setVerificationToken(null);
+        userRepository.save(user);
+        System.out.println("Compte pret: " + email + " / " + rawPassword);
     }
 }

@@ -114,7 +114,7 @@ export default function Dashboard() {
                     <img
                       src={getPhotoUrl(p.id)}
                       alt={p.name}
-                      style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6 }}
+                      style={{ width: "clamp(32px, 7vw, 36px)", height: "clamp(32px, 7vw, 36px)", objectFit: "cover", borderRadius: 6 }}
                     />
                   ) : (
                     <div
